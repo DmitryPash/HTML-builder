@@ -1,29 +1,28 @@
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 
-const folderPath = path.join(__dirname, 'secret-folder');
+async function printFileInfo() {
+  const folderPath = '03-files-in-folder/secret-folder';
 
-fs.readdir(folderPath, (err, files) => {
-  if (err) {
-    console.error('Error reading folder:', err);
-    return;
-  }
+  try {
+    const files = await fs.readdir(folderPath);
 
-  files.forEach(file => {
-    const filePath = path.join(folderPath, file);
+    console.log(`Информация о файлах в папке "${path.basename(folderPath)}":`);
 
-    fs.stat(filePath, (err, stats) => {
-      if (err) {
-        console.error(`Error getting file stats for ${file}:`, err);
-        return;
-      }
+    for (const file of files) {
+      const filePath = path.join(folderPath, file);
+      const stats = await fs.stat(filePath);
 
       if (stats.isFile()) {
-        const fileSizeInKB = stats.size / 1024;
-        console.log(`${path.parse(file).name} - ${path.parse(file).ext.slice(1)} - ${fileSizeInKB.toFixed(3)}kb`);
+        const { size } = stats, [name, ext] = file.split('.');
+        console.log(`${name}-${ext}-${(size / 1024).toFixed(3)}kb`);
       } else {
-        console.error(`${file} is a directory. Only files are allowed.`);
+        console.error(`Error: ${file} is a directory. Skipping.`);
       }
-    });
-  });
-});
+    }
+  } catch (err) {
+    console.error('Произошла ошибка:', err);
+  }
+}
+
+printFileInfo();
