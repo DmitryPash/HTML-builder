@@ -1,23 +1,38 @@
-const fs = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
 
-const stylesPath = '05-merge-styles/styles';
-const distPath = '05-merge-styles/project-dist';
-const bundleFile = 'bundle.css';
+const sourceFolder = '05-merge-styles/styles';
+const destinationFolder = '05-merge-styles/project-dist';
+const outputFileName = 'bundle.css';
 
-async function mergeStyles() {
+const mergeStyles = async (source, destination, outputFileName) => {
   try {
-    await fs.mkdir(distPath, { recursive: true });
+    if (!fs.existsSync(destination)) {
+      fs.mkdirSync(destination);
+    }
 
-    const cssFiles = (await fs.readdir(stylesPath)).filter(file => file.endsWith('.css'));
-    const bundleContent = (await Promise.all(cssFiles.map(file => fs.readFile(path.join(stylesPath, file), 'utf-8')))).join('\n');
+    const files = await fs.promises.readdir(source);
 
-    await fs.writeFile(path.join(distPath, bundleFile), bundleContent, 'utf-8');
+    const cssFiles = files.filter(file => path.extname(file).toLowerCase() === '.css');
 
-    console.log(`Стили успешно объединены в ${bundleFile}`);
+    const cssContentArray = [];
+
+    for (const cssFile of cssFiles) {
+      const cssFilePath = path.join(source, cssFile);
+
+      const cssContent = await fs.promises.readFile(cssFilePath, 'utf-8');
+      cssContentArray.push(cssContent);
+    }
+
+    const bundledCssContent = cssContentArray.join('\n');
+
+    const outputPath = path.join(destination, outputFileName);
+    await fs.promises.writeFile(outputPath, bundledCssContent);
+
+    console.log('CSS bundle created successfully!');
   } catch (err) {
-    console.error('Возникла ошибка при объединении стилей:', err);
+    console.error('Error creating CSS bundle:', err);
   }
-}
+};
 
-mergeStyles();
+mergeStyles(sourceFolder, destinationFolder, outputFileName);
