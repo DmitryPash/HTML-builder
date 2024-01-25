@@ -1,37 +1,35 @@
+const fs = require('fs').promises;
+const readline = require('readline').createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
+const filePath = '02-write-file/textTest.txt';
 
-const fs = require('fs');
-const path = require('path');
-const pathDir = path.join(__dirname, 'text.txt')
-const readline = require('readline');
-const promptText = 'Enter text (Ctrl+C or type "exit" to quit): ';
+const exitProcess = () => {
+  console.log('\nДо свидания!');
+  readline.close();
+  process.exit();
+};
 
+process.on('SIGINT', exitProcess);
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-
-  console.log(rl.output + '---output')
-  console.log(rl.input + '---input')
-
-
-  function getInput() {
-    rl.question(promptText, (input) => {
-      if (input.toLowerCase() === 'exit') {
-        console.log('Farewell! Exiting...');
-        rl.close();
-      } else {
-        fs.appendFileSync(pathDir, input + '\n', 'utf8');
-        getInput();
-      }
-    });
+(async () => {
+  try {
+    await fs.access(filePath);
+    console.log('Добавление нового текста.');
+  } catch (err) {
+    console.log('Файл не существует. Создание нового файла.');
   }
 
-  console.log('Welcome to the text input program!');
-getInput();
+  while (true) {
+    const userInput = await new Promise(resolve =>
+      readline.question('Введите текст (или введите "exit", чтобы выйти): ', resolve)
+    );
 
-rl.on('SIGINT', () => {
-  console.log('\nFarewell! Exiting...');
-  rl.close();
-});
+    if (userInput.toLowerCase() === 'exit') exitProcess();
+
+    await fs.appendFile(filePath, userInput + '\n', 'utf-8');
+    console.log('Текст добавлен в файл "textTest.txt".');
+  }
+})();
